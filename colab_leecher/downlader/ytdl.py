@@ -143,7 +143,9 @@ async def get_YT_Name(link):
         try:
             info = ydl.extract_info(link, download=False)
             if "title" in info and info["title"]: 
-                return info["title"]
+                # Shorten the file name if it exceeds the maximum length
+                title = info["title"][:255]  # Limit the title to 255 characters
+                return title
             else:
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
