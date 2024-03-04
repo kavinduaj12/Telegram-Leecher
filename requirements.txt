@@ -17,4 +17,3 @@ uvloop
 yt_dlp
 libtorrent
 pymegatools
-hashlib
