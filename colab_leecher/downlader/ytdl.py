@@ -3,40 +3,15 @@ import yt_dlp
 from asyncio import sleep
 from threading import Thread
 from os import makedirs, path as ospath
-from pyrogram import InlineKeyboardMarkup, InlineKeyboardButton
 from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths
 from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
-
-
-async def choose_format():
-    # Define the format options
-    format_options = {
-        'video': 'Video (MP4)',
-        'audio': 'Audio (MP3)',
-        # Add more format options as needed
-    }
-    
-    # Create a list of InlineKeyboardButtons for each format option
-    buttons = [
-        InlineKeyboardButton(text=text, callback_data=format_type)
-        for format_type, text in format_options.items()
-    ]
-    
-    # Create InlineKeyboardMarkup with the buttons
-    keyboard = InlineKeyboardMarkup([buttons])
-    
-    return keyboard
 
 
 async def YTDL_Status(link, num):
     global Messages, YTDL
     name = await get_YT_Name(link)
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
-    
-    # Prompt user to choose download format
-    keyboard = await choose_format()
-    await MSG.status_msg.edit_text(text=Messages.task_msg + Messages.status_head + "Choose download format:", reply_markup=keyboard)
 
     YTDL_Thread = Thread(target=YouTubeDL, name="YouTubeDL", args=(link,))
     YTDL_Thread.start()
@@ -118,11 +93,15 @@ def YouTubeDL(url):
             logging.info(d)
 
     ydl_opts = {
+        "format": "best",
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
         "allow_playlist_files": True,
         "overwrites": True,
+        'ignoreerrors': 'true',
+        'source_address': '0.0.0.0'
+        "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
         "writesubtitles": "srt",  # Enable subtitles download
         "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
@@ -167,4 +146,4 @@ async def get_YT_Name(link):
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
-            return "UNKNOWN DOWNLOAD NAME" 
+            return "UNKNOWN DOWNLOAD NAME"
