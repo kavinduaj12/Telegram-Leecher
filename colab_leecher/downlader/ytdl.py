@@ -99,12 +99,13 @@ def YouTubeDL(url):
         "writethumbnail": True,
         "allow_playlist_files": True,
         "overwrites": True,
+        'ignoreerrors': 'true',
+        "--concurrent-fragments": 4 , # Set the maximum number of concurrent fragments
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
         "writesubtitles": "srt",  # Enable subtitles download
         "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
         "logger": MyLogger(),
-        "-o": "%(id)s.%(ext)s"  # Set output template to use video ID as filename
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -119,7 +120,7 @@ def YouTubeDL(url):
                     makedirs(ospath.join(Paths.down_path, playlist_name))
                 ydl_opts["outtmpl"] = {
                     "default": f"{Paths.down_path}/{playlist_name}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
                 }
                 for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
@@ -127,23 +128,28 @@ def YouTubeDL(url):
                         ydl.download([video_url])
                     except yt_dlp.utils.DownloadError as e:
                         if e.exc_info[0] == 36:
-                            ydl_opts["-o"] = "%(id)s.%(ext)s"
+                            ydl_opts["outtmpl"] = {
+                                "default": f"{Paths.down_path}/%(id)s.%(ext)s",
+                                "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                            }
                             ydl.download([video_url])
             else:
                 YTDL.header = ""
                 ydl_opts["outtmpl"] = {
-                    "default": f"{Paths.down_path}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
+                    "default": f"{Paths.down_path}/%(id)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
                 }
                 try:
                     ydl.download([url])
                 except yt_dlp.utils.DownloadError as e:
                     if e.exc_info[0] == 36:
-                        ydl_opts["-o"] = "%(id)s.%(ext)s"
+                        ydl_opts["outtmpl"] = {
+                            "default": f"{Paths.down_path}/%(id)s.%(ext)s",
+                            "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                        }
                         ydl.download([url])
         except Exception as e:
             logging.error(f"YTDL ERROR: {e}")
-
 
 
 async def get_YT_Name(link):
