@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from colab_leecher.utility.helper import status_bar
-from colab_leecher.utility.variables import BotTimes, Messages
+from colab_leecher.utility.variables import BotTimes, Messages, Paths
 from pymegatools import Megatools, MegaError
 
 async def megadl(link: str, num: int):
