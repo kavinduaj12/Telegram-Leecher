@@ -1,6 +1,5 @@
 import logging
 import yt_dlp
-import hashlib
 from asyncio import sleep
 from threading import Thread
 from os import makedirs, path as ospath
@@ -105,6 +104,7 @@ def YouTubeDL(url):
         "writesubtitles": "srt",  # Enable subtitles download
         "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
         "logger": MyLogger(),
+        "-o": "%(id)s.%(ext)s"  # Set output template to use video ID as filename
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -123,16 +123,27 @@ def YouTubeDL(url):
                 }
                 for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
-                    ydl.download([video_url])
+                    try:
+                        ydl.download([video_url])
+                    except yt_dlp.utils.DownloadError as e:
+                        if e.exc_info[0] == 36:
+                            ydl_opts["-o"] = "%(id)s.%(ext)s"
+                            ydl.download([video_url])
             else:
                 YTDL.header = ""
                 ydl_opts["outtmpl"] = {
                     "default": f"{Paths.down_path}/%(title)s.%(ext)s",
                     "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
-                ydl.download([url])
+                try:
+                    ydl.download([url])
+                except yt_dlp.utils.DownloadError as e:
+                    if e.exc_info[0] == 36:
+                        ydl_opts["-o"] = "%(id)s.%(ext)s"
+                        ydl.download([url])
         except Exception as e:
             logging.error(f"YTDL ERROR: {e}")
+
 
 
 async def get_YT_Name(link):
@@ -140,15 +151,9 @@ async def get_YT_Name(link):
         try:
             info = ydl.extract_info(link, download=False)
             if "title" in info and info["title"]: 
-                # Truncate the title to ensure it doesn't exceed the maximum length
-                title = info["title"][:200]  # Limit the title to 200 characters
-                # Generate a unique identifier for the file name
-                identifier = hashlib.sha1(link.encode()).hexdigest()[:8]  # Using a portion of the SHA1 hash
-                # Combine the truncated title and the identifier to create a unique file name
-                unique_filename = f"{title}_{identifier}"
-                return unique_filename
+                return info["title"]
             else:
-                return "UNKNOWN_DOWNLOAD_NAME"
+                return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
-            return "UNKNOWN_DOWNLOAD_NAME"
+            return "UNKNOWN DOWNLOAD NAME"
