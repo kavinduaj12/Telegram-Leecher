@@ -93,15 +93,11 @@ def YouTubeDL(url):
             logging.info(d)
 
     ydl_opts = {
-        "format": "best",
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
         "allow_playlist_files": True,
         "overwrites": True,
-        'ignoreerrors': 'true',
-        'source_address': '0.0.0.0',
-        "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
         "writesubtitles": "srt",  # Enable subtitles download
         "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
@@ -124,6 +120,9 @@ def YouTubeDL(url):
                 }
                 for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
+                    # Truncate the file name if it's too long
+                    truncated_title = entry["title"][:100]  # Adjust the length as needed
+                    ydl_opts["outtmpl"]["default"] = f"{Paths.down_path}/{playlist_name}/{truncated_title}.%(ext)s"
                     ydl.download([video_url])
             else:
                 YTDL.header = ""
@@ -131,6 +130,9 @@ def YouTubeDL(url):
                     "default": f"{Paths.down_path}/%(title)s.%(ext)s",
                     "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
+                # Truncate the file name if it's too long
+                truncated_title = info_dict["title"][:100]  # Adjust the length as needed
+                ydl_opts["outtmpl"]["default"] = f"{Paths.down_path}/{truncated_title}.%(ext)s"
                 ydl.download([url])
         except Exception as e:
             logging.error(f"YTDL ERROR: {e}")
